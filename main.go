@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strings"
+
+	"github.com/agnivade/levenshtein"
 )
 
+// Map applies the given function to each string in the slice
 func Map(vs []string, f func(string) string) []string {
 	vsm := make([]string, len(vs))
 	for i, v := range vs {
@@ -16,8 +20,7 @@ func Map(vs []string, f func(string) string) []string {
 	return vsm
 }
 
-// 370103 words before using this
-// same after?
+// set removes duplicates from a slice of strings
 func set(strings []string) []string {
 	set := make(map[string]bool)
 	for _, s := range strings {
@@ -40,8 +43,8 @@ func words() []string {
 }
 
 func correct(word string) bool {
-	list := words()
-	for _, w := range list {
+	dictionary := words()
+	for _, w := range dictionary {
 		if w == word {
 			return true
 		}
@@ -49,11 +52,26 @@ func correct(word string) bool {
 	return false
 }
 
+// minDistance returns the word that has the minimum Levenshtein distance from
+// the given word, from the list of correct words
+func minDistance(word string) string {
+	dictionary := words()
+	min := math.MaxInt32
+	indexOfClosest := 0
+	for i, w := range dictionary {
+		if distance := levenshtein.ComputeDistance(word, w); distance < min {
+			min = distance
+			indexOfClosest = i
+		}
+	}
+	return dictionary[indexOfClosest]
+}
+
 func main() {
 	word := os.Args[1]
 	if correct(word) {
 		fmt.Println("Correct")
 	} else {
-		fmt.Println("Incorrect")
+		fmt.Printf("Did you mean %s?\n", minDistance(word))
 	}
 }
